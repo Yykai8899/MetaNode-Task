@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 	"strconv"
 	"task-go/task-go/go_base_3/constant"
 )
@@ -51,10 +50,6 @@ func ConnectDB() *gorm.DB {
 func main() {
 	// 初始化数据库
 	db := InitDB()
-	err := db.AutoMigrate(&students{})
-	if err != nil {
-		return
-	}
 	// 题目一
 	//student(db)
 
@@ -198,69 +193,45 @@ func sqlx2(db *gorm.DB) {
 
 type User struct {
 	gorm.Model
-	Name  string `gorm:"column:name"`
-	Posts []Post `gorm:"foreignKey:id;references:post_id"`
+	Name  string
+	Posts []Post
 }
 
 type Post struct {
 	gorm.Model
-	Title    string    `gorm:"column:title"`
-	post     string    `gorm:"column:post"`
-	UserId   uint      `gorm:"column:user_id"`
-	Comments []Comment `gorm:"foreignKey:id;references:comment_id"`
+	Title    string
+	post     string
+	UserId   uint
+	Comments []Comment
 }
 
 type Comment struct {
 	gorm.Model
-	Context string `gorm:"column:context"`
-	PostID  uint   `gorm:"column:post_id"`
+	Context string
+	PostID  uint
 }
 
 func grom1(db *gorm.DB) {
 	// 测试数据
-	userDB := User{
-		Name: "王五",
-		Posts: []Post{
-			{
-				Title:    "文章6",
-				Comments: []Comment{{Context: "评论1111"}},
-			},
-			{
-				Title:    "文章7",
-				Comments: []Comment{{Context: "评论3333"}},
-			},
-		},
-	}
-	db.Create(&userDB)
-	//db.Create(&Post{
-	//	Title:  "文章7",
-	//	UserId: 3,
-	//})
+	//users := []User{{Name: "张三"}, {Name: "李四"}, {Name: "王五"}}
+	//db.Create(&users)
+	//posts := []Post{{Title: "第一篇博客", post: "第一篇测试博客", UserId: 1}, {Title: "第二篇博客", post: "第二篇测试博客", UserId: 2}, {Title: "第三篇博客", post: "第三篇测试博客", UserId: 3}}
+	//db.Create(&posts)
+	//comments := []Comment{{Context: "这是第条7评论", PostID: 7}}
+	//db.Create(&comments)
 
-	//查询某个用户发布的所有文章及其对应的评论信息。
+	// 查询某个用户发布的所有文章及其对应的评论信息。
 	var user User
-	db.Preload("Posts.Comments").Take(&user, 3)
+	db.Preload("Posts").Preload("Posts.Comments").Where("id = ?", 1).First(&user)
 	fmt.Println(user)
 
-	//查询评论数量最多的文章信息。
+	// // 查询评论数最多的文章
 	var post Post
+	db.Preload("Comments").Order("comment_count desc").First(&post)
+	fmt.Println("评论数最高的文章：", post)
 
-	sub := db.Model(&Comment{}).
-		Select("post_id").
-		Group("post_id").
-		Order("COUNT(*) DESC").
-		Limit(1)
-	err := db.Preload("Comments").
-		Where("id = (?)", sub).
-		First(&post).Error
-	if err != nil {
-		panic(fmt.Sprintf("method3 error: %v", err))
-	}
-	fmt.Println(post)
-
-	var comment Comment
-	db.Take(&comment, 9)
-	db.Clauses(clause.Returning{}).Delete(&comment)
+	// 测试删除钩子
+	db.Delete(&Comment{PostID: 8})
 }
 
 // 为 Post 模型添加一个钩子函数，在文章创建时自动更新用户的文章数量统计字段。
