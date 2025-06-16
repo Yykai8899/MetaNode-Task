@@ -12,7 +12,6 @@ type Comment struct {
 	CommentId int       `json:"commentId" gorm:"PRIMARY_KEY;AUTO_INCREMENT"`
 	Blog      Blog      `json:"blog" gorm:"foreignKey:BlogID"`
 	BlogID    int       `json:"blogId" gorm:"index"` // 为BlogID创建索引，优化查询性能
-	User      User      `json:"user" gorm:"foreignKey:UserId"`
 	UserID    int       `json:"userId"`
 	UserName  string    `json:"userName"` // 用于存储User的外键
 	Content   string    `json:"content" gorm:"type:text"`
@@ -22,7 +21,7 @@ type Comment struct {
 
 func CommentInitDB() *gorm.DB {
 	db := dao.ConnectDB()
-	err := db.AutoMigrate(&Comment{})
+	err := db.Debug().AutoMigrate(&Comment{})
 	if err != nil {
 		panic(err)
 	}
@@ -31,6 +30,7 @@ func CommentInitDB() *gorm.DB {
 
 // 新增评论
 func CreateComment(comment *Comment) (err error) {
+	fmt.Println("新增评论:", comment)
 	err = CommentInitDB().Debug().Create(&comment).Error
 	if err != nil {
 		return errors.New("create comment error")
