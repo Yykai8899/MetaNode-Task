@@ -26,8 +26,8 @@ func ConnectDB() *gorm.DB {
 // MysqlDB 连接mysql数据库
 func MysqlDB() (*gorm.DB, error) {
 	db, err := gorm.Open(mysql.Open(constant.MYSQLDB), &gorm.Config{})
-	if err != nil {
-		panic(err)
-	}
+	//if err != nil {
+	//	panic(err)
+	//}
 	return db, err
 }
